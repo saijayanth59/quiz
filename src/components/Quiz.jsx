@@ -1,50 +1,55 @@
-import { useState, useCallback, act } from "react";
-import completedImg from "../assets/quiz-complete.png";
+import { useState, useRef } from "react";
+
 import QUESTIONS from "../questions";
-import Progress from "./Progress";
+import Question from "./Question";
+import Summary from "./Summary";
+
+const INITIAL = { class: "", selected: "" };
 
 export default function Quiz() {
-  const [userAnwsers, setUserAnswers] = useState([]); // to store user answers
-  const activeQIdx = userAnwsers.length; // current question
+  const shuffleAnswers = useRef([]);
+  const [userAnswers, setUserAnswers] = useState([]); // to store user answers
+  const [className, setClassName] = useState(INITIAL);
+  const activeQIdx = userAnswers.length; // current question
   const isComplete = activeQIdx == QUESTIONS.length;
 
   function handleSelect(answer) {
-    console.log(userAnwsers);
-    setUserAnswers((prev) => {
-      return [...prev, answer];
+    setClassName((prev) => {
+      const new_class =
+        answer === QUESTIONS[activeQIdx].answers[0] ? "correct" : "wrong";
+      return { class: new_class, selected: answer };
     });
+    setTimeout(() => {
+      setUserAnswers((prev) => {
+        console.log(prev);
+        setClassName(INITIAL);
+        shuffleAnswers.current = [];
+        return [...prev, answer];
+      });
+    }, 500);
   }
 
-  let render = (
-    <>
-      <div id="summary">
-        <img src={completedImg} alt="" />
-        <h2>Quiz Completed</h2>
-      </div>
-    </>
-  );
-
   if (!isComplete) {
-    const shuffleAnswers = [...QUESTIONS[activeQIdx].answers];
-    shuffleAnswers.sort(() => Math.random() - 0.5);
-    render = (
-      <div id="question">
-        <Progress TIMER={3000} onTimeOut={handleSelect} key={activeQIdx} />
-        <h2>{QUESTIONS[activeQIdx].text}</h2>
-        <ul id="answers">
-          {shuffleAnswers.map((option) => (
-            <li key={option} className="answer">
-              <button onClick={() => handleSelect(option)}>{option}</button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
+    if (shuffleAnswers.current.length === 0) {
+      shuffleAnswers.current = [...QUESTIONS[activeQIdx].answers];
+      shuffleAnswers.current.sort(() => Math.random() - 0.5);
+    }
   }
 
   return (
     <>
-      <div id="quiz">{render}</div>
+      <div id="quiz">
+        {isComplete ? (
+          <Summary answers={userAnswers} />
+        ) : (
+          <Question
+            handleSelect={handleSelect}
+            activeQIdx={activeQIdx}
+            answers={shuffleAnswers.current}
+            className={className}
+          />
+        )}
+      </div>
     </>
   );
 }

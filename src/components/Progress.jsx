@@ -24,7 +24,7 @@ export default function Progress({ TIMER, onTimeOut }) {
 
   return (
     <>
-      <progress max={TIMER} value={remainingTime} />;
+      <progress max={TIMER} value={remainingTime} />
     </>
   );
 }
